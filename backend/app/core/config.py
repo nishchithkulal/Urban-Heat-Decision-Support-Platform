@@ -88,6 +88,14 @@ class Settings(BaseSettings):
             )
         return value
 
+    # The default is only safe for local development: it is the same for every
+    # checkout, so anyone who can read this file can forge tokens signed with it.
+    # _forbid_default_jwt_secret_in_production below refuses to start otherwise.
+    jwt_secret_key: str = "insecure-local-dev-secret-change-me"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 7
+
     @field_validator("log_level")
     @classmethod
     def _normalise_log_level(cls, value: str) -> str:
@@ -109,6 +117,15 @@ class Settings(BaseSettings):
         """
         if self.debug and self.environment.is_production:
             raise ValueError("debug must be disabled when environment is 'production'")
+        return self
+
+    @model_validator(mode="after")
+    def _forbid_default_jwt_secret_in_production(self) -> Settings:
+        default = Settings.model_fields["jwt_secret_key"].default
+        if self.environment.is_production and self.jwt_secret_key == default:
+            raise ValueError(
+                "HEATPILOT_JWT_SECRET_KEY must be set to a real secret in production"
+            )
         return self
 
     @property

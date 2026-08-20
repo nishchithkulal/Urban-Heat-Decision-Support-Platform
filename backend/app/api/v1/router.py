@@ -9,10 +9,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.modules.auth.router import router as auth_router
+
 router = APIRouter()
 
-# No domain modules exist yet (Phase 1 is foundation only). The first module router
-# is included here, e.g.:
-#
-#   from app.modules.weather.router import router as weather_router
-#   router.include_router(weather_router, prefix="/weather", tags=["Weather"])
+router.include_router(auth_router, prefix="/auth", tags=["Auth"])
