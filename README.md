@@ -9,7 +9,7 @@ guidelines, architecture strategy, and roadmap.
 
 ## Status
 
-Phase 3 — Authentication.
+Phase 4 — Weather module.
 
 ## Stack
 
