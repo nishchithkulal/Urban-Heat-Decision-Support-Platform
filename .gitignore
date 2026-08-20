@@ -110,5 +110,12 @@ docker-data/
 # Project Specific
 ##################################################
 
+# A pattern with a slash in the middle (like the one below) is anchored to the
+# directory containing this .gitignore -- it only matches ./ml/models/, not
+# backend/ml/models/, where trained model artifacts actually land (see
+# app/core/config.py Settings.ml_model_path). Both are listed explicitly rather than
+# relying on one non-anchored pattern to cover both, so this stays correct if a
+# repo-root ml/ directory is ever introduced alongside backend/'s.
 ml/models/
+backend/ml/models/
 data/
