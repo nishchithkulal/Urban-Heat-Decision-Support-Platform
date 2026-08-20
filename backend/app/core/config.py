@@ -36,6 +36,19 @@ class Environment(StrEnum):
         return self is Environment.PRODUCTION
 
 
+class PredictionStrategyName(StrEnum):
+    """Which app.modules.prediction.strategy.PredictionStrategy backs
+    /api/v1/predictions/heat-risk. Lives here (not in the prediction module) so
+    Settings stays the single place that decides configuration, rather than importing
+    a domain module's vocabulary into core config -- CLAUDE.md section 7's "avoid
+    importing another module's internals" applies to the dependency direction here
+    too: modules depend on core, core does not depend on modules.
+    """
+
+    BASELINE = "baseline"
+    ML = "ml"
+
+
 class Settings(BaseSettings):
     """Typed, validated application settings.
 
@@ -88,6 +101,31 @@ class Settings(BaseSettings):
             )
         return value
 
+    # The default is only safe for local development: it is the same for every
+    # checkout, so anyone who can read this file can forge tokens signed with it.
+    # _forbid_default_jwt_secret_in_production below refuses to start otherwise.
+    jwt_secret_key: str = "insecure-local-dev-secret-change-me"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 7
+
+    # Shared by every outbound integration (currently: the weather provider), not
+    # weather-specific — a future module calling another external API reuses the same
+    # pooled client rather than each module managing its own.
+    http_client_timeout_seconds: float = 5.0
+
+    # api.open-meteo.com requires no API key, which keeps this project runnable
+    # without anyone provisioning credentials. Configurable so a self-hosted mirror
+    # or a different provider can be swapped in without a code change.
+    weather_provider_base_url: str = "https://api.open-meteo.com/v1/forecast"
+
+    # "baseline" (the NWS heat-index formula) needs no setup and is the safe default.
+    # "ml" requires a trained model artifact at ml_model_path -- run
+    # `python -m app.modules.prediction.ml.train` first, or the strategy raises a
+    # clear error per-request rather than the app failing to start.
+    prediction_strategy: PredictionStrategyName = PredictionStrategyName.BASELINE
+    ml_model_path: str = "ml/models/heat_index_regressor.joblib"
+
     @field_validator("log_level")
     @classmethod
     def _normalise_log_level(cls, value: str) -> str:
@@ -109,6 +147,15 @@ class Settings(BaseSettings):
         """
         if self.debug and self.environment.is_production:
             raise ValueError("debug must be disabled when environment is 'production'")
+        return self
+
+    @model_validator(mode="after")
+    def _forbid_default_jwt_secret_in_production(self) -> Settings:
+        default = Settings.model_fields["jwt_secret_key"].default
+        if self.environment.is_production and self.jwt_secret_key == default:
+            raise ValueError(
+                "HEATPILOT_JWT_SECRET_KEY must be set to a real secret in production"
+            )
         return self
 
     @property
