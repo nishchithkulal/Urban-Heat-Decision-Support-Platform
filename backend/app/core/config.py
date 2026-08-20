@@ -96,6 +96,16 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
 
+    # Shared by every outbound integration (currently: the weather provider), not
+    # weather-specific — a future module calling another external API reuses the same
+    # pooled client rather than each module managing its own.
+    http_client_timeout_seconds: float = 5.0
+
+    # api.open-meteo.com requires no API key, which keeps this project runnable
+    # without anyone provisioning credentials. Configurable so a self-hosted mirror
+    # or a different provider can be swapped in without a code change.
+    weather_provider_base_url: str = "https://api.open-meteo.com/v1/forecast"
+
     @field_validator("log_level")
     @classmethod
     def _normalise_log_level(cls, value: str) -> str:

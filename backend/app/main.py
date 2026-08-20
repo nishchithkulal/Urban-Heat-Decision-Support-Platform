@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -34,6 +35,7 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         await app.state.db_engine.dispose()
+        await app.state.http_client.aclose()
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -59,6 +61,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     engine = create_engine(settings)
     app.state.db_engine = engine
     app.state.db_session_factory = create_session_factory(engine)
+    app.state.http_client = httpx.AsyncClient(
+        timeout=settings.http_client_timeout_seconds
+    )
 
     # Correlation ID must be outermost so it wraps CORS handling and every response,
     # including error responses produced by the exception handlers below.

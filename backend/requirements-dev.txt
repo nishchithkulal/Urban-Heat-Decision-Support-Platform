@@ -4,7 +4,6 @@
 -r requirements.txt
 
 pytest
-httpx
 ruff
 mypy
 anyio
