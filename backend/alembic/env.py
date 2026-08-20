@@ -1,5 +1,6 @@
 import asyncio
 from logging.config import fileConfig
+from typing import Any
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -8,6 +9,11 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 from app.core.config import get_settings
 from app.core.database import Base
+
+# Each domain module's models must be imported somewhere before Base.metadata is read,
+# or its tables are invisible to `alembic revision --autogenerate`. This is that one
+# place — add a line here whenever a module gains models, no other file needs to know.
+from app.modules.auth import models as auth_models  # noqa: E402,F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -33,6 +39,63 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+# The postgis/postgis Docker image (and any Postgres with the tiger_geocoder/topology
+# extensions installed) pre-creates dozens of tables that belong to those extensions,
+# not this application. Without this filter, every `alembic revision --autogenerate`
+# would propose dropping all of them, because they exist in the database but are not
+# part of our declarative metadata. This list is the stable, documented set of tables
+# those two extensions install; it does not need to change unless a future migration
+# deliberately enables another PostGIS extension with its own tables.
+_POSTGIS_EXTENSION_TABLES = frozenset(
+    {
+        "spatial_ref_sys",
+        "topology",
+        "layer",
+        "addr",
+        "addrfeat",
+        "bg",
+        "county",
+        "county_lookup",
+        "countysub_lookup",
+        "cousub",
+        "direction_lookup",
+        "edges",
+        "faces",
+        "featnames",
+        "geocode_settings",
+        "geocode_settings_default",
+        "loader_lookuptables",
+        "loader_platform",
+        "loader_variables",
+        "pagc_gaz",
+        "pagc_lex",
+        "pagc_rules",
+        "place",
+        "place_lookup",
+        "secondary_unit_lookup",
+        "state",
+        "state_lookup",
+        "street_type_lookup",
+        "tabblock",
+        "tabblock20",
+        "tract",
+        "zcta5",
+        "zip_lookup",
+        "zip_lookup_all",
+        "zip_lookup_base",
+        "zip_state",
+        "zip_state_loc",
+    }
+)
+
+
+def _include_object(
+    object_: Any, name: str | None, type_: str, reflected: bool, compare_to: Any
+) -> bool:
+    if type_ == "table" and reflected and compare_to is None:
+        return name not in _POSTGIS_EXTENSION_TABLES
+    return True
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -52,6 +115,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_object=_include_object,
     )
 
     with context.begin_transaction():
@@ -59,7 +123,11 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        include_object=_include_object,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
