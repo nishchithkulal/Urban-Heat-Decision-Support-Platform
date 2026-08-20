@@ -30,7 +30,9 @@ def test_debug_is_rejected_in_production() -> None:
 
 
 def test_docs_are_disabled_in_production() -> None:
-    settings = _settings(environment=Environment.PRODUCTION)
+    settings = _settings(
+        environment=Environment.PRODUCTION, jwt_secret_key="a-real-production-secret"
+    )
 
     assert settings.docs_url is None
     assert settings.redoc_url is None
@@ -76,3 +78,16 @@ def test_default_database_url_uses_asyncpg_driver() -> None:
 def test_non_asyncpg_database_url_is_rejected() -> None:
     with pytest.raises(ValidationError):
         _settings(database_url="postgresql://user:pass@localhost/heatpilot")
+
+
+def test_default_jwt_secret_is_rejected_in_production() -> None:
+    with pytest.raises(ValidationError):
+        _settings(environment=Environment.PRODUCTION)
+
+
+def test_custom_jwt_secret_is_accepted_in_production() -> None:
+    settings = _settings(
+        environment=Environment.PRODUCTION, jwt_secret_key="a-real-production-secret"
+    )
+
+    assert settings.jwt_secret_key == "a-real-production-secret"
