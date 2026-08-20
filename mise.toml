@@ -1,0 +1,13 @@
+#
+# Runtime version pinning for HeatPilot AI.
+#
+# Committed so every machine resolves identical runtimes. Replaces .python-version
+# (a pyenv convention that pins nothing for Node).
+#
+[tools]
+python = "3.12.13"
+node = "22"
+
+[env]
+# Keep the backend virtualenv inside backend/ so it is discoverable and gitignored.
+_.python.venv = { path = "backend/.venv", create = true }
