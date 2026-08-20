@@ -14,6 +14,7 @@ from app.core.database import Base
 # or its tables are invisible to `alembic revision --autogenerate`. This is that one
 # place — add a line here whenever a module gains models, no other file needs to know.
 from app.modules.auth import models as auth_models  # noqa: E402,F401
+from app.modules.gis import models as gis_models  # noqa: E402,F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
