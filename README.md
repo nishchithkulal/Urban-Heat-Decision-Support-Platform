@@ -9,7 +9,7 @@ guidelines, architecture strategy, and roadmap.
 
 ## Status
 
-Phase 2 — Database.
+Phase 3 — Authentication.
 
 ## Stack
 
