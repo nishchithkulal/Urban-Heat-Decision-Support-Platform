@@ -9,21 +9,24 @@ guidelines, architecture strategy, and roadmap.
 
 ## Status
 
-Phase 1 — Backend Foundation.
+Phase 2 — Database.
 
 ## Stack
 
 - **Backend:** FastAPI, Python 3.12.13, Pydantic Settings
-- **Frontend:** Next.js 16, TypeScript, Tailwind CSS v4 (not yet scaffolded — Phase 5)
-- **Database:** PostgreSQL + PostGIS, SQLAlchemy, Alembic (not yet introduced — Phase 2)
+- **Frontend:** Next.js 16, TypeScript, Tailwind CSS v4 (not yet scaffolded — Phase 8)
+- **Database:** PostgreSQL + PostGIS, SQLAlchemy (async), Alembic
 - **Runtimes:** managed via [mise](https://mise.jdx.dev/) — see `mise.toml`
 
 ## Backend — local development
 
 ```bash
 mise install                              # installs pinned Python/Node
+docker compose up -d db                   # local PostgreSQL + PostGIS
 cd backend
 pip install -r requirements-dev.txt
+cp .env.example .env                      # adjust if your DB isn't the compose default
+alembic upgrade head                      # apply migrations
 uvicorn app.main:app --reload
 ```
 
@@ -40,6 +43,7 @@ Configuration is via environment variables prefixed `HEATPILOT_`. Copy
 ### Testing and quality gates
 
 ```bash
+docker compose up -d db                   # tests run against a real PostGIS instance
 cd backend
 ruff check .
 ruff format --check .
@@ -47,4 +51,5 @@ mypy app
 pytest -v
 ```
 
-All four run in CI on every push and pull request (`.github/workflows/ci.yml`).
+All four run in CI on every push and pull request (`.github/workflows/ci.yml`), against
+a Postgres+PostGIS service container.

@@ -9,3 +9,7 @@ uvicorn[standard]
 pydantic
 pydantic-settings
 python-json-logger
+sqlalchemy[asyncio]
+asyncpg
+alembic
+geoalchemy2

@@ -18,8 +18,16 @@ turning a transient dependency hiccup into a full restart storm.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+import logging
+
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.api.deps import DbSessionDep
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["System"])
 
@@ -43,13 +51,20 @@ def liveness() -> HealthStatus:
     "/readyz",
     summary="Readiness probe",
     description=(
-        "Returns 200 if this instance can currently serve traffic. "
-        "Will check dependencies (database, etc.) once they exist."
+        "Returns 200 if this instance can currently serve traffic, 503 if a "
+        "dependency (currently: the database) is unreachable."
     ),
     response_model=HealthStatus,
     status_code=status.HTTP_200_OK,
+    responses={status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Not ready"}},
 )
-def readiness() -> HealthStatus:
-    # No dependencies exist yet (Phase 1: no database, no cache). This will gain real
-    # dependency checks in Phase 2 rather than being retrofitted from scratch.
+async def readiness(db: DbSessionDep) -> HealthStatus:
+    try:
+        await db.execute(text("SELECT 1"))
+    except SQLAlchemyError as exc:
+        logger.warning("Readiness check failed: database unavailable", exc_info=exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database unavailable",
+        ) from exc
     return HealthStatus(status="ready")

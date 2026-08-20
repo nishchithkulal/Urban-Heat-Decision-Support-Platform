@@ -1,0 +1,24 @@
+# Local development database only. Not used in CI (the CI workflow runs its own
+# Postgres+PostGIS service container) and not a production deployment artifact —
+# see CLAUDE.md section 9 (infrastructure is introduced when a concrete need exists,
+# not preemptively) and section 32 (Docker for app images is Phase 9).
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: heatpilot
+      POSTGRES_PASSWORD: heatpilot
+      POSTGRES_DB: heatpilot
+    ports:
+      - "5432:5432"
+    volumes:
+      - heatpilot_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U heatpilot -d heatpilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  heatpilot_db_data:

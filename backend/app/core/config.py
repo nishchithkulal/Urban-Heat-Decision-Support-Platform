@@ -70,6 +70,24 @@ class Settings(BaseSettings):
     # footgun.
     cors_origins: str = ""
 
+    # asyncpg is the only driver the app runtime uses. Alembic reuses this same URL
+    # (see alembic/env.py) so there is exactly one place a developer sets connection
+    # details, instead of a sync URL for migrations and an async one for the app.
+    database_url: str = (
+        "postgresql+asyncpg://heatpilot:heatpilot@localhost:5432/heatpilot"
+    )
+    database_echo: bool = False
+
+    @field_validator("database_url")
+    @classmethod
+    def _require_asyncpg_driver(cls, value: str) -> str:
+        if not value.startswith("postgresql+asyncpg://"):
+            raise ValueError(
+                "database_url must use the 'postgresql+asyncpg://' driver "
+                f"(got {value!r}); the app's engine is async-only"
+            )
+        return value
+
     @field_validator("log_level")
     @classmethod
     def _normalise_log_level(cls, value: str) -> str:
