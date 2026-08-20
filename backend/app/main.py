@@ -19,6 +19,7 @@ from app.api.health import router as health_router
 from app.api.v1.router import router as v1_router
 from app.core.config import Settings, get_settings
 from app.core.correlation import CorrelationIdMiddleware
+from app.core.database import create_engine, create_session_factory
 from app.core.errors import register_exception_handlers
 from app.core.logging import align_uvicorn_logging, configure_logging
 
@@ -29,7 +30,10 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     # regardless of whether the app is served by uvicorn, run directly in tests, or
     # imported some other way.
     align_uvicorn_logging()
-    yield
+    try:
+        yield
+    finally:
+        await app.state.db_engine.dispose()
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -51,6 +55,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         contact={"name": "HeatPilot AI Team"},
         lifespan=_lifespan,
     )
+
+    engine = create_engine(settings)
+    app.state.db_engine = engine
+    app.state.db_session_factory = create_session_factory(engine)
 
     # Correlation ID must be outermost so it wraps CORS handling and every response,
     # including error responses produced by the exception handlers below.
