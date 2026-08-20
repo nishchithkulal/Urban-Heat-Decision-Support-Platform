@@ -9,12 +9,12 @@ guidelines, architecture strategy, and roadmap.
 
 ## Status
 
-Phase 7 — ML integration.
+Phase 8 — Frontend dashboard.
 
 ## Stack
 
 - **Backend:** FastAPI, Python 3.12.13, Pydantic Settings
-- **Frontend:** Next.js 16, TypeScript, Tailwind CSS v4 (not yet scaffolded — Phase 8)
+- **Frontend:** Next.js 16, TypeScript, Tailwind CSS v4, App Router
 - **Database:** PostgreSQL + PostGIS, SQLAlchemy (async), Alembic
 - **Runtimes:** managed via [mise](https://mise.jdx.dev/) — see `mise.toml`
 
@@ -53,3 +53,26 @@ pytest -v
 
 All four run in CI on every push and pull request (`.github/workflows/ci.yml`), against
 a Postgres+PostGIS service container.
+
+## Frontend — local development
+
+```bash
+mise install                              # installs pinned Node
+cd frontend
+npm install
+cp .env.example .env.local                # points at the local backend by default
+npm run dev
+```
+
+The dashboard is served at `http://localhost:3000` and talks to the backend at
+`NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:8000`) — start the backend
+first. Pages: dashboard home (API/DB status), `/weather`, `/predictions` (heat risk),
+`/locations` (GIS — creating a location requires an admin account), `/login`,
+`/register`.
+
+```bash
+cd frontend
+npm run lint
+npx tsc --noEmit
+npm run build
+```
