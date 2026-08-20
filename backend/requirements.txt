@@ -18,3 +18,4 @@ argon2-cffi
 email-validator
 python-multipart
 httpx
+shapely

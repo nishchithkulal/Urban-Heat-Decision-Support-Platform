@@ -10,9 +10,11 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.modules.auth.router import router as auth_router
+from app.modules.gis.router import router as gis_router
 from app.modules.weather.router import router as weather_router
 
 router = APIRouter()
 
 router.include_router(auth_router, prefix="/auth", tags=["Auth"])
 router.include_router(weather_router, prefix="/weather", tags=["Weather"])
+router.include_router(gis_router, prefix="/gis", tags=["GIS"])

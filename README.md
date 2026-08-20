@@ -9,7 +9,7 @@ guidelines, architecture strategy, and roadmap.
 
 ## Status
 
-Phase 4 — Weather module.
+Phase 5 — GIS module.
 
 ## Stack
 
