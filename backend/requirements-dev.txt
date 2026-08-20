@@ -1,0 +1,9 @@
+# Development and CI tooling on top of the runtime dependencies. Kept separate so the
+# production image never installs pytest.
+
+-r requirements.txt
+
+pytest
+httpx
+ruff
+mypy
