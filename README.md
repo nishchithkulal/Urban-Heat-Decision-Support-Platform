@@ -9,7 +9,7 @@ guidelines, architecture strategy, and roadmap.
 
 ## Status
 
-Phase 5 — GIS module.
+Phase 6 — Prediction module (baseline).
 
 ## Stack
 
