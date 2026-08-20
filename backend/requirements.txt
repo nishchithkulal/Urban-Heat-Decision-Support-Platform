@@ -1,0 +1,11 @@
+# Direct runtime dependencies only. Hand-curated, not `pip freeze` output, so that
+# upgrading one package doesn't mean reconciling a wall of untouched transitive pins.
+# Exact versions are pinned once resolved locally (`pip install -r requirements.txt`
+# then `pip freeze` to record what actually installed, kept in a separate lock step —
+# not done here since no environment has resolved this yet).
+
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-json-logger
