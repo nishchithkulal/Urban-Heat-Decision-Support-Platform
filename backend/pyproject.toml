@@ -10,6 +10,13 @@ python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
 
+# Neither ships type stubs or a py.typed marker; used only in the ML training/serving
+# path (app/modules/prediction/ml, strategies/ml.py), never in strictly-typed
+# request-path code beyond that boundary.
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "joblib.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"

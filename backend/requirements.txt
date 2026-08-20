@@ -19,3 +19,5 @@ email-validator
 python-multipart
 httpx
 shapely
+scikit-learn
+joblib

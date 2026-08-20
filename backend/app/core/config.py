@@ -36,6 +36,19 @@ class Environment(StrEnum):
         return self is Environment.PRODUCTION
 
 
+class PredictionStrategyName(StrEnum):
+    """Which app.modules.prediction.strategy.PredictionStrategy backs
+    /api/v1/predictions/heat-risk. Lives here (not in the prediction module) so
+    Settings stays the single place that decides configuration, rather than importing
+    a domain module's vocabulary into core config -- CLAUDE.md section 7's "avoid
+    importing another module's internals" applies to the dependency direction here
+    too: modules depend on core, core does not depend on modules.
+    """
+
+    BASELINE = "baseline"
+    ML = "ml"
+
+
 class Settings(BaseSettings):
     """Typed, validated application settings.
 
@@ -105,6 +118,13 @@ class Settings(BaseSettings):
     # without anyone provisioning credentials. Configurable so a self-hosted mirror
     # or a different provider can be swapped in without a code change.
     weather_provider_base_url: str = "https://api.open-meteo.com/v1/forecast"
+
+    # "baseline" (the NWS heat-index formula) needs no setup and is the safe default.
+    # "ml" requires a trained model artifact at ml_model_path -- run
+    # `python -m app.modules.prediction.ml.train` first, or the strategy raises a
+    # clear error per-request rather than the app failing to start.
+    prediction_strategy: PredictionStrategyName = PredictionStrategyName.BASELINE
+    ml_model_path: str = "ml/models/heat_index_regressor.joblib"
 
     @field_validator("log_level")
     @classmethod

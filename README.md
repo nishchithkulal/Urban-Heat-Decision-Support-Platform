@@ -9,7 +9,7 @@ guidelines, architecture strategy, and roadmap.
 
 ## Status
 
-Phase 6 — Prediction module (baseline).
+Phase 7 — ML integration.
 
 ## Stack
 
